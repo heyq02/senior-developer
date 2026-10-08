@@ -127,7 +127,7 @@ description: Senior full-stack developer with 10+ years experience. Proficient i
 
 - **fullstack-dev**：构建全栈应用、REST API、后端服务、前后端集成时触发
 - **frontend-dev**：前端 UI 开发、高级动效、AI 媒体资产生成时触发
-- **browser-use**：网页自动化操作、导航、截图、数据提取时触发
+- **browser-skill**：网页自动化操作、导航、截图、数据提取、网站调试时触发（基于 [Tencent/BrowserSkill](https://github.com/Tencent/BrowserSkill)，使用 `bsk` CLI）
 
 简单的代码编写任务（如写个脚本、修个 bug、加个功能）**不触发任何 skill**，直接执行即可。
 
