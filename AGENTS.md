@@ -9,8 +9,8 @@ Use project skills when relevant: `fullstack-dev`, `frontend-dev`, `browser-skil
 | `.claude/agents/senior-developer.md` | Claude Code subagent |
 | `.agents/skills/` | Portable Agent Skills (Cursor / Codex / OpenCode / …) |
 
-Install into another project (project-scoped, no global):
+Install into another project via Agent Prompt (project-scoped, no global):
 
-```bash
-./install.sh --target /path/to/your-app
+```
+Set up senior-developer in this project by following https://raw.githubusercontent.com/heyq02/senior-developer/main/AGENT_INSTALL.md
 ```

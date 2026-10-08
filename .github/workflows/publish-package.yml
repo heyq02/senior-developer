@@ -72,7 +72,7 @@ jobs:
         run: |
           STAGE="dist/${PACKAGE_NAME}"
           mkdir -p "${STAGE}"
-          cp -R .agents .cursor .claude avatars install.sh AGENTS.md README.md "${STAGE}/"
+          cp -R .agents .cursor .claude avatars install.sh AGENTS.md AGENT_INSTALL.md README.md "${STAGE}/"
           chmod +x "${STAGE}/install.sh"
 
           # Drop junk that should never ship
@@ -150,7 +150,12 @@ jobs:
             echo "| Archive | \`${ARCHIVE}\` |"
             echo "| Release | [${RELEASE_URL}](${RELEASE_URL}) |"
             echo ""
-            echo "### Install into a project (no global)"
+            echo "### Agent Prompt"
+            echo '```'
+            echo "Set up senior-developer in this project by following https://raw.githubusercontent.com/heyq02/senior-developer/main/AGENT_INSTALL.md"
+            echo '```'
+            echo ""
+            echo "### Manual"
             echo '```bash'
             echo "oras pull ${PACKAGE}:${VERSION}"
             echo "unzip ${ARCHIVE}"
