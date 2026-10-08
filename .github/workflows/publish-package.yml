@@ -1,0 +1,146 @@
+name: Publish Zip to GitHub Packages
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version (e.g. 1.0.0). Leave empty to use run number."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
+concurrency:
+  group: publish-package-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PACKAGE_NAME: senior-developer
+  ARTIFACT_TYPE: application/vnd.heyq02.senior-developer+zip
+  MEDIA_TYPE: application/zip
+
+jobs:
+  publish:
+    name: Build zip & publish to GHCR
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      package: ${{ steps.meta.outputs.package }}
+      archive: ${{ steps.meta.outputs.archive }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version & package refs
+        id: meta
+        run: |
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          REPO_LC="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            RAW="${{ github.ref_name }}"
+            VERSION="${RAW#v}"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="0.0.${{ github.run_number }}"
+          fi
+
+          ARCHIVE="${PACKAGE_NAME}-${VERSION}.zip"
+          PACKAGE="ghcr.io/${OWNER_LC}/${REPO_LC}"
+
+          {
+            echo "version=${VERSION}"
+            echo "archive=${ARCHIVE}"
+            echo "package=${PACKAGE}"
+            echo "owner_lc=${OWNER_LC}"
+            echo "repo_lc=${REPO_LC}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Publishing ${ARCHIVE} → ${PACKAGE}:${VERSION}"
+
+      - name: Build distribution zip
+        run: |
+          STAGE="dist/${PACKAGE_NAME}"
+          mkdir -p "${STAGE}"
+          cp -R agents skills avatars README.md "${STAGE}/"
+
+          # Drop junk that should never ship
+          find "${STAGE}" -name '.DS_Store' -delete
+          find "${STAGE}" -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
+          mkdir -p dist
+          (
+            cd dist
+            zip -r "${{ steps.meta.outputs.archive }}" "${PACKAGE_NAME}"
+          )
+
+          ls -lh "dist/${{ steps.meta.outputs.archive }}"
+          unzip -l "dist/${{ steps.meta.outputs.archive }}" | head -60
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.archive }}
+          path: dist/${{ steps.meta.outputs.archive }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Setup ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
+            --username "${{ github.actor }}" --password-stdin
+
+      - name: Push zip to GitHub Packages (GHCR)
+        env:
+          PACKAGE: ${{ steps.meta.outputs.package }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ARCHIVE: ${{ steps.meta.outputs.archive }}
+          REPO_URL: https://github.com/${{ github.repository }}
+        run: |
+          oras push "${PACKAGE}:${VERSION}" \
+            --artifact-type "${ARTIFACT_TYPE}" \
+            --annotation "org.opencontainers.image.source=${REPO_URL}" \
+            --annotation "org.opencontainers.image.version=${VERSION}" \
+            --annotation "org.opencontainers.image.title=${PACKAGE_NAME}" \
+            --annotation "org.opencontainers.image.description=Senior Developer agent pack (zip)" \
+            --annotation "org.opencontainers.image.revision=${{ github.sha }}" \
+            "dist/${ARCHIVE}:${MEDIA_TYPE}"
+
+          # Always refresh latest for the same package
+          oras tag "${PACKAGE}:${VERSION}" "${PACKAGE}:latest"
+
+      - name: Summary
+        env:
+          PACKAGE: ${{ steps.meta.outputs.package }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ARCHIVE: ${{ steps.meta.outputs.archive }}
+        run: |
+          {
+            echo "## Published to GitHub Packages"
+            echo ""
+            echo "| Item | Value |"
+            echo "| --- | --- |"
+            echo "| Package | \`${PACKAGE}\` |"
+            echo "| Version | \`${VERSION}\` |"
+            echo "| Tags | \`${VERSION}\`, \`latest\` |"
+            echo "| Archive | \`${ARCHIVE}\` |"
+            echo ""
+            echo "### Pull"
+            echo '```bash'
+            echo "oras pull ${PACKAGE}:${VERSION}"
+            echo "unzip ${ARCHIVE}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
