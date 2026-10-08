@@ -72,7 +72,8 @@ jobs:
         run: |
           STAGE="dist/${PACKAGE_NAME}"
           mkdir -p "${STAGE}"
-          cp -R agents skills avatars README.md "${STAGE}/"
+          cp -R .agents .cursor .claude avatars install.sh AGENTS.md README.md "${STAGE}/"
+          chmod +x "${STAGE}/install.sh"
 
           # Drop junk that should never ship
           find "${STAGE}" -name '.DS_Store' -delete
@@ -85,7 +86,7 @@ jobs:
           )
 
           ls -lh "dist/${{ steps.meta.outputs.archive }}"
-          unzip -l "dist/${{ steps.meta.outputs.archive }}" | head -60
+          unzip -l "dist/${{ steps.meta.outputs.archive }}" | head -80
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -149,9 +150,10 @@ jobs:
             echo "| Archive | \`${ARCHIVE}\` |"
             echo "| Release | [${RELEASE_URL}](${RELEASE_URL}) |"
             echo ""
-            echo "### Pull"
+            echo "### Install into a project (no global)"
             echo '```bash'
             echo "oras pull ${PACKAGE}:${VERSION}"
             echo "unzip ${ARCHIVE}"
+            echo "./${PACKAGE_NAME}/install.sh --target /path/to/your-app"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
