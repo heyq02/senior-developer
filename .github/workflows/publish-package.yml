@@ -72,7 +72,7 @@ jobs:
         run: |
           STAGE="dist/${PACKAGE_NAME}"
           mkdir -p "${STAGE}"
-          cp -R .agents .cursor .claude avatars install.sh AGENTS.md AGENT_INSTALL.md README.md "${STAGE}/"
+          cp -R .agents .cursor .claude .codex .opencode avatars install.sh AGENTS.md AGENT_INSTALL.md README.md "${STAGE}/"
           chmod +x "${STAGE}/install.sh"
 
           # Drop junk that should never ship
