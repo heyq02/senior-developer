@@ -1,0 +1,14 @@
+.gitignore
+  h_a57efa94f24ca5 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "d842b4fe57b5b441e6391f7cb150a0c5bc096c46",
+  "prompts": {},
+  "humans": {
+    "h_a57efa94f24ca5": {
+      "author": "heyongqi10 <heyongqi10@jd.com>"
+    }
+  }
+}
