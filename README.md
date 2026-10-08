@@ -36,7 +36,10 @@ echo "$GITHUB_TOKEN" | oras login ghcr.io -u USERNAME --password-stdin
 
 ## 发布
 
-打 `v*` 标签推送，或在 Actions 里手动运行 **Publish Zip to GitHub Packages**：
+打 `v*` 标签推送，或在 Actions 里手动运行 **Publish Zip to GitHub Packages**。流程会：
+
+1. 构建 zip 并推到 GitHub Packages（GHCR）
+2. 创建对应的 [GitHub Release](https://github.com/heyq02/senior-developer/releases)，并附上 zip 产物
 
 ```bash
 git tag v1.0.0

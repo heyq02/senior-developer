@@ -12,7 +12,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   attestations: write
   id-token: write
@@ -122,14 +122,24 @@ jobs:
           # Always refresh latest for the same package
           oras tag "${PACKAGE}:${VERSION}" "${PACKAGE}:latest"
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.meta.outputs.version }}
+          name: v${{ steps.meta.outputs.version }}
+          files: dist/${{ steps.meta.outputs.archive }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
       - name: Summary
         env:
           PACKAGE: ${{ steps.meta.outputs.package }}
           VERSION: ${{ steps.meta.outputs.version }}
           ARCHIVE: ${{ steps.meta.outputs.archive }}
+          RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.meta.outputs.version }}
         run: |
           {
-            echo "## Published to GitHub Packages"
+            echo "## Published to GitHub Packages + Release"
             echo ""
             echo "| Item | Value |"
             echo "| --- | --- |"
@@ -137,6 +147,7 @@ jobs:
             echo "| Version | \`${VERSION}\` |"
             echo "| Tags | \`${VERSION}\`, \`latest\` |"
             echo "| Archive | \`${ARCHIVE}\` |"
+            echo "| Release | [${RELEASE_URL}](${RELEASE_URL}) |"
             echo ""
             echo "### Pull"
             echo '```bash'
